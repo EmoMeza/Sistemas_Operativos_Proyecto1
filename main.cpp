@@ -56,6 +56,7 @@ int main() {
             if (pids[i] == -1) {
                 // Error al crear el proceso hijo
                 std::cerr << "Error: no se pudo crear el proceso hijo\n";
+                exit(1);
             }
             else if (pids[i] == 0) {
                 // Este es el proceso hijo
@@ -81,6 +82,8 @@ int main() {
                 execvp(argv[0], argv);
                 // Si llegamos aquí, hubo un error al ejecutar el comando
                 std::cerr << "Error: no se pudo ejecutar el comando\n";
+                perror("execvp");
+                delete[] argv; // Evitar leaks de memoria
                 exit(1);
             }
 
@@ -92,6 +95,7 @@ int main() {
                 // Crear un nuevo pipe en el proceso padre
                 if (pipe(pipes[i]) == -1) {
                     std::cerr << "Error: no se pudo crear el pipe\n";
+                    perror("pipe");
                     continue;
                 }
                 // Cerrar el descriptor de escritura del pipe actual en el proceso padre
