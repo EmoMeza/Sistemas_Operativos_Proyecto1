@@ -21,131 +21,88 @@ int main() {
             break;
         }
 
+        // Crear un vector de vectores de strings para almacenar los comandos separados por pipes
+        std::vector<std::vector<std::string>> commands;
+
         // Crear un flujo de entrada a partir de la línea leída
         std::istringstream iss(line);
 
-        // Leer el comando y sus argumentos
+        // Leer el primer comando y sus argumentos
         std::vector<std::string> args;
         std::string arg;
         while (iss >> arg) {
-            args.push_back(arg);
+            if (arg == "|") {
+                // Agregar el comando actual al vector de comandos
+                commands.push_back(args);
+                args.clear();
+            } else {
+                args.push_back(arg);
+            }
         }
+        // Agregar el último comando al vector de comandos
+        commands.push_back(args);
 
-        if(args.empty()){
-        }
-        else{
-            // Buscar si el comando contiene un pipe
-            int pipe_pos = -1;
-            for (int i = 0; i < args.size(); i++) {
-                if (args[i] == "|") {
-                    pipe_pos = i;
-                    break;
+        // Crear un vector de pipes
+        std::vector<int[2]> pipes(commands.size() - 1);
+
+        // Crear un vector de procesos hijos
+        std::vector<pid_t> pids(commands.size());
+
+        // Crear un bucle para ejecutar los comandos en cada proceso hijo
+        for (int i = 0; i < commands.size(); i++) {
+            // Crear un nuevo proceso hijo
+            pids[i] = fork();
+
+            if (pids[i] == -1) {
+                // Error al crear el proceso hijo
+                std::cerr << "Error: no se pudo crear el proceso hijo\n";
+            }
+            else if (pids[i] == 0) {
+                // Este es el proceso hijo
+                if (i > 0) {
+                    // Redirigir la entrada estándar al descriptor de lectura del pipe anterior
+                    dup2(pipes[i - 1][0], STDIN_FILENO);
+                    // Cerrar el descriptor de escritura del pipe anterior
+                    close(pipes[i - 1][1]);
                 }
+                if (i < commands.size() - 1) {
+                    // Redirigir la salida estándar al descriptor de escritura del pipe actual
+                    dup2(pipes[i][1], STDOUT_FILENO);
+                    // Cerrar el descriptor de lectura del pipe actual
+                    close(pipes[i][0]);
+                }
+
+                // Ejecutar el comando correspondiente
+                char** argv = new char*[commands[i].size() + 1];
+                for (int j = 0; j < commands[i].size(); j++) {
+                    argv[j] = const_cast<char*>(commands[i][j].c_str());
+                }
+                argv[commands[i].size()] = nullptr;
+                execvp(argv[0], argv);
+                // Si llegamos aquí, hubo un error al ejecutar el comando
+                std::cerr << "Error: no se pudo ejecutar el comando\n";
+                exit(1);
             }
 
-            if (pipe_pos == -1) {
-                // No hay pipe, ejecutar el comando normalmente
-                // Crear un nuevo proceso hijo
-                pid_t pid = fork();
-
-                if (pid == -1) {
-                    // Error al crear el proceso hijo
-                    std::cerr << "Error: no se pudo crear el proceso hijo\n";
-                }
-                else if (pid == 0) {
-                    // Este es el proceso hijo
-                    // Ejecutar el comando ingresado
-                    char** argv = new char*[args.size() + 1];
-                    for (int i = 0; i < args.size(); i++) {
-                        argv[i] = const_cast<char*>(args[i].c_str());
-                    }
-                    argv[args.size()] = nullptr;
-                    execvp(argv[0], argv);
-                    // Si llegamos aquí, hubo un error al ejecutar el comando
-                    std::cerr << "Error: no se pudo ejecutar el comando\n";
-                    exit(1);
-                }
-                else {
-                    // Este es el proceso padre
-                    // Esperar a que el proceso hijo termine de ejecutar el comando
-                    int status;
-                    waitpid(pid, &status, 0);
-                }
+            if (i > 0) {
+                // Cerrar el descriptor de lectura del pipe anterior en el proceso padre
+                close(pipes[i - 1][0]);
             }
-            else {
-                // Hay un pipe, dividir el comando en dos comandos separados
-                std::vector<std::string> args1(args.begin(), args.begin() + pipe_pos);
-                std::vector<std::string> args2(args.begin() + pipe_pos + 1, args.end());
-
-                // Crear un pipe
-                int fd[2];
-                if (pipe(fd) == -1) {
+            if (i < commands.size() - 1) {
+                // Crear un nuevo pipe en el proceso padre
+                if (pipe(pipes[i]) == -1) {
                     std::cerr << "Error: no se pudo crear el pipe\n";
                     continue;
                 }
-
-                // Crear el primer proceso hijo
-                pid_t pid1 = fork();
-
-                if (pid1 == -1) {
-                    // Error al crear el proceso hijo
-                    std::cerr << "Error: no se pudo crear el proceso hijo\n";
-                }
-                else if (pid1 == 0) {
-                    // Este es el primer proceso hijo
-                    // Redirigir la salida estándar al descriptor de escritura del pipe
-                    close(fd[0]);
-                    dup2(fd[1], STDOUT_FILENO);
-                    close(fd[1]);
-
-                    // Ejecutar el primer comando
-                    char** argv = new char*[args1.size() + 1];
-                    for (int i = 0; i < args1.size(); i++) {
-                        argv[i] = const_cast<char*>(args1[i].c_str());
-                    }
-                    argv[args1.size()] = nullptr;
-                    execvp(argv[0], argv);
-                    // Si llegamos aquí, hubo un error al ejecutar el comando
-                    std::cerr << "Error: no se pudo ejecutar el comando\n";
-                    exit(1);
-                }
-
-                // Crear el segundo proceso hijo
-                pid_t pid2 = fork();
-
-                if (pid2 == -1) {
-                    // Error al crear el proceso hijo
-                    std::cerr << "Error: no se pudo crear el proceso hijo\n";
-                }
-                else if (pid2 == 0) {
-                    // Este es el segundo proceso hijo
-                    // Redirigir la entrada estándar al descriptor de lectura del pipe
-                    close(fd[1]);
-                    dup2(fd[0], STDIN_FILENO);
-                    close(fd[0]);
-
-                    // Ejecutar el segundo comando
-                    char** argv = new char*[args2.size() + 1];
-                    for (int i = 0; i < args2.size(); i++) {
-                        argv[i] = const_cast<char*>(args2[i].c_str());
-                    }
-                    argv[args2.size()] = nullptr;
-                    execvp(argv[0], argv);
-                    // Si llegamos aquí, hubo un error al ejecutar el comando
-                    std::cerr << "Error: no se pudo ejecutar el comando\n";
-                    exit(1);
-                }
-
-                // Este es el proceso padre
-                // Cerrar los descriptores de archivo del pipe
-                close(fd[0]);
-                close(fd[1]);
-
-                // Esperar a que los procesos hijos terminen de ejecutar los comandos
-                int status;
-                waitpid(pid1, &status, 0);
-                waitpid(pid2, &status, 0);
+                // Cerrar el descriptor de escritura del pipe actual en el proceso padre
+                close(pipes[i][1]);
             }
+        }
+
+        // Esperar a que todos los procesos hijos terminen de ejecutar sus comandos
+        for (int i = 0; i < commands.size(); i++) {
+            int status;
+            waitpid(pids[i], &status, 0);
         }
     }
     return 0;
