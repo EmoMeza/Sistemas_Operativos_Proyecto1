@@ -73,6 +73,10 @@ int main() {
             // Si no hay entrada, saltar la iteración
             continue;
         }
+        // Si no hay comando y solo se presiono enter
+        if (line.empty()){
+            continue;
+        }
 
         // Verificar si el comando es "exit"
         if (line == "exit") {
