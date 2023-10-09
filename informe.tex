@@ -34,9 +34,9 @@ La Parte 1 del código se encarga de implementar una shell simple que cumple con
 \item Proporciona un prompt (indicador de modo de espera de comandos) para que el usuario ingrese comandos.
 \item Lee el comando ingresado por el usuario desde la entrada estándar y lo parsea para identificar el comando y sus argumentos, con la capacidad de manejar un número indeterminado de argumentos.
 \item Ejecuta el comando ingresado en un proceso hijo utilizando las llamadas al sistema \texttt{fork()} y \texttt{exec()}. La shell espera a que el comando en ejecución termine antes de mostrar nuevamente el prompt.
-\item Maneja la entrada en blanco (cuando el usuario presiona "enter") imprimiendo nuevamente el prompt.
+\item Maneja la entrada en blanco (cuando el usuario presiona \texttt{enter}) imprimiendo nuevamente el prompt.
 \item Soporta comandos que se comunican mediante pipes (\texttt{|}), lo que permite redirigir la salida de un comando como entrada para otro comando.
-\item Puede finalizarse si se ingresa el comando "\texttt{exit}".
+\item Puede finalizarse si se ingresa el comando \texttt{exit}.
 \item Proporciona un mensaje de error si se ingresa un comando que no existe.
 \end{enumerate}
 
@@ -48,7 +48,7 @@ La Parte 2 del código se encarga de crear un demonio que mide y registra inform
 
 \begin{enumerate}
 \item Crea un demonio que recopila información del sistema cada $t$ segundos durante un tiempo total de $p$ segundos.
-\item El demonio extrae información como "processes", "procs\_running" y "procs\_blocked" del archivo \texttt{/proc/stat} para sistemas Linux.
+\item El demonio extrae información como "processes", "procs\_running"\texttt{ y} "procs\_blocked" del archivo \texttt{/proc/stat} para sistemas Linux.
 \item Utiliza llamadas al sistema como \texttt{fork}, \texttt{umask}, \texttt{setsid}, \texttt{openlog}, \texttt{syslog}, y \texttt{closelog} para configurar y gestionar el demonio.
 \item Puede ser detenido mediante el comando \texttt{killall} de Linux.
 \end{enumerate}
