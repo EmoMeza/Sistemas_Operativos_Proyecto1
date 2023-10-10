@@ -1,16 +1,16 @@
 # Proyecto 1 Sistemas Operativos
 
-## Compiling
+## Compilar
 
-To compile the project, run the following command:
+Para compilar el proyecto, es necesario escribir el siguiente comando:
 
-```
+```bash
 g++ -o shell main.cpp
 ```
 
 ## Running
 
-To run the project, run the following command:
-```
+Para ejecutar, usar el siguiente comando:
+```bash
 ./shell
 ```
