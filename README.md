@@ -8,7 +8,7 @@ Para compilar el proyecto, es necesario escribir el siguiente comando:
 g++ -o shell main.cpp
 ```
 
-## Running
+## Ejecución
 
 Para ejecutar, usar el siguiente comando:
 ```bash
